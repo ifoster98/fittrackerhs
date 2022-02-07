@@ -1,6 +1,6 @@
 module Domain where
 
-import Data.Time
+import Data.Time ( UTCTime )
 
 type RepCount = Integer
 type Weight = Double

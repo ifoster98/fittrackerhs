@@ -2,7 +2,16 @@
 module FiveByFive where
 
 import Domain
-import Repository
+    ( Exercise(..),
+      ExerciseType(..),
+      Outcome(Failure),
+      RepCount,
+      Reps(..),
+      Weight,
+      Workout(..),
+      WorkoutSubType(..),
+      WorkoutType(FiveByFive) )
+import InMemRepository ( getExercises )
 
 getExercisesForWorkout :: WorkoutType -> WorkoutSubType -> [ExerciseType]
 getExercisesForWorkout FiveByFive WorkoutA = [Squat, BenchPress, BentOverRows]

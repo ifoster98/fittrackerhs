@@ -4,6 +4,7 @@ import Data.Time ( UTCTime )
 
 type RepCount = Integer
 type Weight = Double
+type Error = String
 
 data Outcome = Success | Failure deriving (Show, Eq)
 data WorkoutType = FiveByFive | MadCow | UpperLowerSplit deriving (Show, Eq)

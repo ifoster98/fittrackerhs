@@ -1,20 +1,8 @@
 module InMemRepository where
 
 import Domain
-    ( Exercise(..),
-      ExerciseType(..),
-      Outcome(Success),
-      Reps(..),
-      Workout )
 import Data.Time.Calendar ( fromGregorian )
 import Data.Time ( UTCTime(UTCTime), secondsToDiffTime )
-
-saveActualWorkout :: Workout -> IO Bool
-saveActualWorkout wkt = pure True
-
-saveProposedWorkout :: Workout -> IO Bool
-saveProposedWorkout wkt = pure True
-
 
 exerciseDay1 :: UTCTime
 exerciseDay1 = UTCTime (fromGregorian 2022 02 01) (secondsToDiffTime 0)
@@ -63,9 +51,24 @@ br2 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay2, s
 br3 :: Exercise
 br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, sets = getReps 45}
 
-getExercises :: ExerciseType -> [Exercise]
-getExercises Squat = [s1, s2, s3]
-getExercises Deadlift = [d1, d2, d3]
-getExercises BenchPress = [b1, b2, b3]
-getExercises OverheadPress = [o1, o2, o3]
-getExercises BentOverRows = [br1, br2, br3]
+
+
+
+
+
+saveExercise :: Exercise -> Either [Error] Outcome 
+saveExercise e = Right Success
+
+saveProposedWorkout :: Workout -> Either [Error] Outcome
+saveProposedWorkout wkt = Right Success
+
+getProposedWorkout :: WorkoutType -> WorkoutSubType -> Either [Error] Workout
+getProposedWorkout wt wst =  Right wk
+  where wk = Workout {workoutType = FiveByFive, workoutSubType = WorkoutA, workoutTime = Nothing, exercises = []}
+
+getExercises :: ExerciseType -> Either [Error] [Exercise]
+getExercises Squat = Right [s1, s2, s3]
+getExercises Deadlift = Right [d1, d2, d3]
+getExercises BenchPress = Right [b1, b2, b3]
+getExercises OverheadPress = Right [o1, o2, o3]
+getExercises BentOverRows = Right [br1, br2, br3]

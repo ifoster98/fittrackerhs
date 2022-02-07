@@ -2,15 +2,6 @@
 module FiveByFive where
 
 import Domain
-    ( Exercise(..),
-      ExerciseType(..),
-      Outcome(Failure),
-      RepCount,
-      Reps(..),
-      Weight,
-      Workout(..),
-      WorkoutSubType(..),
-      WorkoutType(FiveByFive) )
 import InMemRepository ( getExercises )
 
 getExercisesForWorkout :: WorkoutType -> WorkoutSubType -> [ExerciseType]
@@ -39,13 +30,15 @@ getWeight exercise = weight (head (sets exercise))
 getOutcome :: Exercise -> Outcome
 getOutcome exercise = outcome (head (sets exercise))
 
-getLastWeight :: [Exercise] -> Double
-getLastWeight ers = getWeight (last ers)
+getLastWeight :: Either [Error] [Exercise] -> Double
+getLastWeight (Left ers) = 0.0
+getLastWeight (Right ex) = getWeight (last ex)
 
-getLastTwoOutcomes :: [Exercise] -> (Outcome, Outcome)
-getLastTwoOutcomes ers = (lastButOne, last)
-  where last = getOutcome (head (takeLast 1 ers))
-        lastButOne = getOutcome (head (takeLast 2 ers))
+getLastTwoOutcomes :: Either [Error] [Exercise] -> (Outcome, Outcome)
+getLastTwoOutcomes (Left ers) = (Failure, Failure)
+getLastTwoOutcomes (Right ex) = (lastButOne, last)
+  where last = getOutcome (head (takeLast 1 ex))
+        lastButOne = getOutcome (head (takeLast 2 ex))
 
 generateRep :: Weight -> RepCount -> Outcome -> Reps
 generateRep w r o = Reps {weight = w, repCount = r, outcome = o}

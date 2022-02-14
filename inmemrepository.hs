@@ -1,4 +1,4 @@
-module InMemRepository where
+module InMemRepository(saveExercise, saveProposedWorkout, getExercises, getProposedWorkout) where
 
 import Domain
 import Data.Time.Calendar ( fromGregorian )

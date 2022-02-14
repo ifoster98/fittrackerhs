@@ -1,12 +1,10 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module FiveByFive where
+module FiveByFive(generateNextWorkout) where
 
 import Domain
-import InMemRepository ( getExercises )
 
-getExercisesForWorkout :: WorkoutType -> WorkoutSubType -> [ExerciseType]
-getExercisesForWorkout FiveByFive WorkoutA = [Squat, BenchPress, BentOverRows]
-getExercisesForWorkout FiveByFive WorkoutB = [Squat, OverheadPress, Deadlift]
+getExercisesForWorkout :: WorkoutSubType -> [ExerciseType]
+getExercisesForWorkout WorkoutA = [Squat, BenchPress, BentOverRows]
+getExercisesForWorkout WorkoutB = [Squat, OverheadPress, Deadlift]
 
 inc :: ExerciseType -> Weight -> Double
 inc Deadlift w = w + 5
@@ -43,22 +41,22 @@ getLastTwoOutcomes (Right ex) = (lastButOne, last)
 generateRep :: Weight -> RepCount -> Outcome -> Reps
 generateRep w r o = Reps {weight = w, repCount = r, outcome = o}
 
-generateRepsForNextWorkout :: WorkoutType -> Weight -> [Reps]
-generateRepsForNextWorkout FiveByFive w = replicate 5 (generateRep w 5 Failure)
+generateRepsForNextWorkout :: Weight -> [Reps]
+generateRepsForNextWorkout w = replicate 5 (generateRep w 5 Failure)
 
-getNextWeight :: ExerciseType -> Double
-getNextWeight et = calculateNextWeight et lastWeight lastOutcomes
-  where results = getExercises et
+getNextWeight :: ExerciseType -> (ExerciseType -> Either [Error] [Exercise]) -> Double
+getNextWeight et gExc = calculateNextWeight et lastWeight lastOutcomes
+  where results = gExc et
         lastWeight = getLastWeight results
         lastOutcomes = getLastTwoOutcomes results
 
-generateExercisesForNextWorkout :: WorkoutType -> WorkoutSubType -> [ExerciseType] -> [Exercise]
-generateExercisesForNextWorkout FiveByFive wst [] = []
-generateExercisesForNextWorkout FiveByFive wst (x:xs) = Exercise {exerciseType = x, exerciseTime = Nothing, sets = reps}:generateExercisesForNextWorkout FiveByFive wst xs
-  where nextWeight = getNextWeight x
-        reps = generateRepsForNextWorkout FiveByFive nextWeight
+generateExercisesForNextWorkout :: WorkoutSubType -> (ExerciseType -> Either [Error] [Exercise]) -> [ExerciseType] -> [Exercise]
+generateExercisesForNextWorkout wst _ [] = []
+generateExercisesForNextWorkout wst gExc (x:xs) = Exercise {exerciseType = x, exerciseTime = Nothing, sets = reps}:generateExercisesForNextWorkout wst gExc xs
+  where nextWeight = getNextWeight x gExc
+        reps = generateRepsForNextWorkout nextWeight
 
-generateNextWorkout :: WorkoutType -> WorkoutSubType -> Workout
-generateNextWorkout wt wst = Workout { workoutType = wt, workoutSubType = wst, workoutTime = Nothing, exercises = exercises }
-  where exercisesForWorkout = getExercisesForWorkout wt wst
-        exercises = generateExercisesForNextWorkout wt wst exercisesForWorkout
+generateNextWorkout :: WorkoutSubType -> (ExerciseType -> Either [Error] [Exercise]) -> Workout
+generateNextWorkout wst gExc = Workout { workoutType = FiveByFive, workoutSubType = wst, workoutTime = Nothing, exercises = exercises }
+  where exercisesForWorkout = getExercisesForWorkout wst
+        exercises = generateExercisesForNextWorkout wst gExc exercisesForWorkout

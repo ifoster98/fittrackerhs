@@ -12,13 +12,13 @@ type Error = String
 
 data Outcome = Success | Failure deriving (Show)
 instance Eq Outcome where
-    (==) Success Success = True 
-    (==) Failure Failure = True 
+    (==) Success Success = True
+    (==) Failure Failure = True
     (==) _ _ = False
 instance Ord Outcome where
     compare Success Success = EQ
-    compare Failure Failure = EQ 
-    compare Success Failure = GT 
+    compare Failure Failure = EQ
+    compare Success Failure = GT
     compare Failure Success = LT
 
 data WorkoutType = FiveByFive | MadCow | UpperLowerSplit deriving (Show, Eq, Ord)
@@ -43,39 +43,37 @@ data Workout = Workout {
 
 
 
-inc :: ExerciseType -> Weight -> Double
+inc :: ExerciseType -> Weight -> Weight
 inc Deadlift w = w + 5
 inc _ w = w + 2.5
 
-dec :: ExerciseType -> Weight -> Double
+dec :: ExerciseType -> Weight -> Weight
 dec Deadlift w = w - 5
 dec _ w = w - 2.5
-
-getWeight :: Exercise -> Double
-getWeight exercise = weight (head (sets exercise))
 
 takeLast :: Int -> [a] -> [a]
 takeLast n aList = reverse (take n (reverse aList))
 
+getWeight :: Exercise -> Weight
+getWeight exercise = weight (head (sets exercise))
+
 getOutcome :: Exercise -> Outcome
 getOutcome exercise = outcome (head (sets exercise))
 
-calculateNextWeight :: ExerciseType -> Weight -> (Outcome, Outcome) -> Double
+calculateNextWeight :: ExerciseType -> Weight -> (Outcome, Outcome) -> Weight
 calculateNextWeight et w (Failure, Failure) = dec et w
 calculateNextWeight et w (_, Failure) = w
 calculateNextWeight et w (_, _) = inc et w
 
-getLastWeight :: Either [Error] [Exercise] -> Double
-getLastWeight (Left ers) = 0.0
-getLastWeight (Right ex) = getWeight (last ex)
+getLastWeight :: [Exercise] -> Weight
+getLastWeight ex = getWeight (last ex)
 
-getLastTwoOutcomes :: Either [Error] [Exercise] -> (Outcome, Outcome)
-getLastTwoOutcomes (Left ers) = (Failure, Failure)
-getLastTwoOutcomes (Right ex) = (lastButOne, last)
+getLastTwoOutcomes :: [Exercise] -> (Outcome, Outcome)
+getLastTwoOutcomes ex = (lastButOne, last)
   where last = getOutcome (head (takeLast 1 ex))
         lastButOne = getOutcome (head (takeLast 2 ex))
 
-getNextWeight :: ExerciseType -> (ExerciseType -> Either [Error] [Exercise]) -> Double
+getNextWeight :: ExerciseType -> (ExerciseType -> [Exercise]) -> Weight
 getNextWeight et gExc = calculateNextWeight et lastWeight lastOutcomes
   where results = gExc et
         lastWeight = getLastWeight results
@@ -87,7 +85,7 @@ generateRep w r o = Reps {weight = w, repCount = r, outcome = o}
 generateRepsForNextWorkout :: Weight -> [Reps]
 generateRepsForNextWorkout w = replicate 5 (generateRep w 5 Failure)
 
-generateExercisesForNextWorkout :: WorkoutSubType -> (ExerciseType -> Either [Error] [Exercise]) -> [ExerciseType] -> [Exercise]
+generateExercisesForNextWorkout :: WorkoutSubType -> (ExerciseType -> [Exercise]) -> [ExerciseType] -> [Exercise]
 generateExercisesForNextWorkout wst _ [] = []
 generateExercisesForNextWorkout wst gExc (x:xs) = Exercise {exerciseType = x, exerciseTime = Nothing, sets = reps}:generateExercisesForNextWorkout wst gExc xs
   where nextWeight = getNextWeight x gExc
@@ -97,12 +95,15 @@ getExercisesForWorkout :: WorkoutSubType -> [ExerciseType]
 getExercisesForWorkout WorkoutA = [Squat, BenchPress, BentOverRows]
 getExercisesForWorkout WorkoutB = [Squat, OverheadPress, Deadlift]
 
-generateNextWorkout :: WorkoutSubType -> (ExerciseType -> Either [Error] [Exercise]) -> Workout
-generateNextWorkout wst gExc = Workout { workoutType = FiveByFive, workoutSubType = wst, workoutTime = Nothing, exercises = exercises }
-  where exercisesForWorkout = getExercisesForWorkout wst
+getNextWorkoutSubType :: WorkoutSubType -> WorkoutSubType
+getNextWorkoutSubType WorkoutA = WorkoutB
+getNextWorkoutSubType _ = WorkoutA
+
+generateNextWorkout :: Workout -> (ExerciseType -> [Exercise]) -> Workout
+generateNextWorkout w gExc = Workout { workoutType = FiveByFive, workoutSubType = wst, workoutTime = Nothing, exercises = exercises }
+  where wst = getNextWorkoutSubType (workoutSubType w)
+        exercisesForWorkout = getExercisesForWorkout wst
         exercises = generateExercisesForNextWorkout wst gExc exercisesForWorkout
-
-
 
 
 exerciseDay1 :: UTCTime
@@ -157,22 +158,22 @@ br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, s
 
 
 
-saveExercise :: Exercise -> Either [Error] Outcome 
-saveExercise e = Right Success
+saveExercise :: Exercise -> Outcome
+saveExercise e = Success
 
-saveProposedWorkout :: Workout -> Either [Error] Outcome
-saveProposedWorkout wkt = Right Success
+saveProposedWorkout :: Workout -> Outcome
+saveProposedWorkout wkt = Success
 
-getProposedWorkout :: WorkoutType -> WorkoutSubType -> Either [Error] Workout
-getProposedWorkout wt wst =  Right wk
+getProposedWorkout :: WorkoutSubType -> Workout
+getProposedWorkout wst =  wk
   where wk = Workout {workoutType = FiveByFive, workoutSubType = WorkoutA, workoutTime = Nothing, exercises = []}
 
-getExercises :: ExerciseType -> Either [Error] [Exercise]
-getExercises Squat = Right [s1, s2, s3]
-getExercises Deadlift = Right [d1, d2, d3]
-getExercises BenchPress = Right [b1, b2, b3]
-getExercises OverheadPress = Right [o1, o2, o3]
-getExercises BentOverRows = Right [br1, br2, br3]
+getExercises :: ExerciseType -> [Exercise]
+getExercises Squat = [s1, s2, s3]
+getExercises Deadlift = [d1, d2, d3]
+getExercises BenchPress = [b1, b2, b3]
+getExercises OverheadPress = [o1, o2, o3]
+getExercises BentOverRows = [br1, br2, br3]
 
 
 
@@ -180,11 +181,13 @@ getExercises BentOverRows = Right [br1, br2, br3]
 
 
 
-getNextWorkout :: WorkoutType -> WorkoutSubType -> Either [Error] Workout
+getNextWorkout :: WorkoutSubType -> Workout
 getNextWorkout = getProposedWorkout
 
-saveWorkout :: Workout -> Either [Error] Outcome
-saveWorkout w = Right Success
 -- Write incoming message to log
--- Save each exercise in the incoming workout separately to the repository
 -- Generate the next workout in this sequence and save to repository
+
+-- Save each exercise in the incoming workout separately to the repository
+saveWorkout :: Workout -> [Outcome]
+saveWorkout w = map saveExercise exs
+    where exs = exercises w

@@ -10,7 +10,17 @@ type RepCount = Integer
 type Weight = Double
 type Error = String
 
-data Outcome = Success | Failure deriving (Show, Eq, Ord)
+data Outcome = Success | Failure deriving (Show)
+instance Eq Outcome where
+    (==) Success Success = True 
+    (==) Failure Failure = True 
+    (==) _ _ = False
+instance Ord Outcome where
+    compare Success Success = EQ
+    compare Failure Failure = EQ 
+    compare Success Failure = GT 
+    compare Failure Success = LT
+
 data WorkoutType = FiveByFive | MadCow | UpperLowerSplit deriving (Show, Eq, Ord)
 data WorkoutSubType = WorkoutA | WorkoutB deriving (Show, Eq, Ord)
 data ExerciseType = Squat | BenchPress | Deadlift | OverheadPress | BentOverRows deriving (Show, Eq, Ord)

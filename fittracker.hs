@@ -9,6 +9,7 @@ import Data.Time ( UTCTime(UTCTime), secondsToDiffTime )
 type RepCount = Integer
 type Weight = Double
 type Error = String
+type Foo = Integer
 
 data Outcome = Success | Failure deriving (Show)
 instance Eq Outcome where

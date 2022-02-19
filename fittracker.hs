@@ -3,6 +3,8 @@ module Fittracker where
 import System.Process (getProcessExitCode)
 import Data.Time.Calendar ( fromGregorian )
 import Data.Time ( UTCTime(UTCTime), secondsToDiffTime )
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 
 
@@ -153,6 +155,20 @@ br3 :: Exercise
 br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, sets = getReps 45}
 
 
+squats :: [Exercise]
+squats = [s1, s2, s3]
+deadlifts :: [Exercise]
+deadlifts = [d1, d2, d3]
+benchPresses :: [Exercise]
+benchPresses = [b1, b2, b3]
+overheadPresses :: [Exercise]
+overheadPresses = [o1, o2, o3]
+bentOverRows :: [Exercise]
+bentOverRows = [br1, br2, br3]
+
+storedExercises :: Map ExerciseType [Exercise]
+storedExercises = Map.fromList[(Squat, squats),(Deadlift, deadlifts),(BenchPress, benchPresses),(OverheadPress, overheadPresses),(BentOverRows, bentOverRows)]
+
 
 
 
@@ -167,14 +183,12 @@ getProposedWorkout :: WorkoutSubType -> Workout
 getProposedWorkout wst =  wk
   where wk = Workout {workoutType = FiveByFive, workoutSubType = WorkoutA, workoutTime = Nothing, exercises = []}
 
+listOrEmpty :: Maybe [Exercise] -> [Exercise]
+listOrEmpty Nothing = []
+listOrEmpty (Just es) = es
+
 getExercises :: ExerciseType -> [Exercise]
-getExercises Squat = [s1, s2, s3]
-getExercises Deadlift = [d1, d2, d3]
-getExercises BenchPress = [b1, b2, b3]
-getExercises OverheadPress = [o1, o2, o3]
-getExercises BentOverRows = [br1, br2, br3]
-
-
+getExercises et = listOrEmpty (Map.lookup et storedExercises)
 
 
 

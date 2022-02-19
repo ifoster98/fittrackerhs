@@ -167,7 +167,10 @@ bentOverRows :: [Exercise]
 bentOverRows = [br1, br2, br3]
 
 storedExercises :: Map ExerciseType [Exercise]
-storedExercises = Map.fromList[(Squat, squats),(Deadlift, deadlifts),(BenchPress, benchPresses),(OverheadPress, overheadPresses),(BentOverRows, bentOverRows)]
+storedExercises = Map.fromList keyVals
+  where keys = [Squat, Deadlift, BenchPress, OverheadPress, BentOverRows]
+        vals = [squats, deadlifts, benchPresses, overheadPresses, bentOverRows]
+        keyVals = zip keys vals
 
 
 

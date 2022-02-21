@@ -41,6 +41,11 @@ data Workout = Workout {
   , workoutTime :: Maybe UTCTime
   , exercises :: [Exercise] } deriving (Show, Eq, Ord)
 
+data Database = Database {
+  exerciseLookup :: Map ExerciseType [Exercise]
+  , proposedWorkout :: Maybe Workout
+}
+
 
 
 
@@ -113,6 +118,8 @@ exerciseDay2 :: UTCTime
 exerciseDay2 = UTCTime (fromGregorian 2022 02 03) (secondsToDiffTime 0)
 exerciseDay3 :: UTCTime
 exerciseDay3 = UTCTime (fromGregorian 2022 02 05) (secondsToDiffTime 0)
+exerciseDay4 :: UTCTime
+exerciseDay4 = UTCTime (fromGregorian 2022 02 07) (secondsToDiffTime 0)
 
 getReps :: Double -> [Reps]
 getReps w = replicate 5 r
@@ -154,6 +161,19 @@ br2 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay2, s
 br3 :: Exercise
 br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, sets = getReps 45}
 
+s4 :: Exercise
+s4 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay4, sets = getReps 57.5}
+d4 :: Exercise
+d4 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay4, sets = getReps 85}
+b4 :: Exercise
+b4 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay4, sets = getReps 57.5}
+o4 :: Exercise
+o4 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay4, sets = getReps 37.5}
+br4 :: Exercise
+br4 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay4, sets = getReps 47.5}
+
+nextExercises = [s4, b4, d4]
+
 
 squats :: [Exercise]
 squats = [s1, s2, s3]
@@ -166,44 +186,48 @@ overheadPresses = [o1, o2, o3]
 bentOverRows :: [Exercise]
 bentOverRows = [br1, br2, br3]
 
-storedExercises :: Map ExerciseType [Exercise]
-storedExercises = Map.fromList keyVals
+dbExercises :: Map ExerciseType [Exercise]
+dbExercises = Map.fromList keyVals
   where keys = [Squat, Deadlift, BenchPress, OverheadPress, BentOverRows]
         vals = [squats, deadlifts, benchPresses, overheadPresses, bentOverRows]
         keyVals = zip keys vals
 
+database = Database {exerciseLookup = dbExercises, proposedWorkout = Nothing}
 
 
 
 
-saveExercise :: Exercise -> Outcome
-saveExercise e = Success
 
-saveProposedWorkout :: Workout -> Outcome
-saveProposedWorkout wkt = Success
+saveExercise :: Database -> Exercise -> Database
+saveExercise db e = Database {exerciseLookup = newElu, proposedWorkout = proposedWorkout db}
+  where elu = exerciseLookup db
+        et = exerciseType e
+        es = getExercises db et
+        f x  = Just (e:reverse es)
+        newElu = Map.update f et elu
 
-getProposedWorkout :: WorkoutSubType -> Workout
-getProposedWorkout wst =  wk
-  where wk = Workout {workoutType = FiveByFive, workoutSubType = WorkoutA, workoutTime = Nothing, exercises = []}
+saveProposedWorkout :: Database -> Workout -> Database
+saveProposedWorkout db wkt = Database {exerciseLookup = exerciseLookup db, proposedWorkout = Just wkt}
 
 listOrEmpty :: Maybe [Exercise] -> [Exercise]
 listOrEmpty Nothing = []
 listOrEmpty (Just es) = es
 
-getExercises :: ExerciseType -> [Exercise]
-getExercises et = listOrEmpty (Map.lookup et storedExercises)
+getExercises :: Database -> ExerciseType -> [Exercise]
+getExercises db et = listOrEmpty (Map.lookup et (exerciseLookup db))
 
 
 
-
-
-getNextWorkout :: WorkoutSubType -> Workout
-getNextWorkout = getProposedWorkout
 
 -- Write incoming message to log
 -- Generate the next workout in this sequence and save to repository
 
--- Save each exercise in the incoming workout separately to the repository
-saveWorkout :: Workout -> [Outcome]
-saveWorkout w = map saveExercise exs
-    where exs = exercises w
+saveExercises :: Database -> [Exercise] -> Database
+saveExercises db exs = foldl (\d1 d2 -> d2) db dbs 
+  where f = saveExercise db
+        dbs = map f exs
+
+longestList :: [a] -> [a] -> [a]
+longestList l1 l2 = if length l1 > length l2 
+                      then l1
+                      else l2

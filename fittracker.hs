@@ -1,5 +1,3 @@
-module Fittracker where
-
 import System.Process (getProcessExitCode)
 import Data.Time.Calendar ( fromGregorian )
 import Data.Time ( UTCTime(UTCTime), secondsToDiffTime )
@@ -242,3 +240,14 @@ instance Semigroup Database where
   (<>) d1 d2 = Database {proposedWorkout = mpw, exerciseLookup = elu}
     where mpw = mergeProposedWorkouts (proposedWorkout d1) (proposedWorkout d2)
           elu = mergeExercises (exerciseLookup d1) (exerciseLookup d2)
+
+
+
+
+
+
+main :: IO ()
+main = do
+  let d = saveExercises database nextExercises
+  let squats = getExercises d Squat
+  print squats

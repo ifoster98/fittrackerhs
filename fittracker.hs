@@ -219,17 +219,26 @@ getExercises db et = listOrEmpty (Map.lookup et (exerciseLookup db))
 -- Generate the next workout in this sequence and save to repository
 
 saveExercises :: Database -> [Exercise] -> Database
-saveExercises db exs = foldl mergeDatabases db dbs
+saveExercises db exs = foldl (<>) db dbs
   where f = saveExercise db
         dbs = map f exs
 
-longestList :: [a] -> [a] -> [a]
-longestList l1 l2 = if length l1 > length l2
-                      then l1
-                      else l2
-
 mergeExercises :: Ord k => Map k [a] -> Map k [a] -> Map k [a]
 mergeExercises = Map.unionWith longestList
+  where longestList l1 l2 = if length l1 > length l2 then l1 else l2
+
+mergeProposedWorkouts :: Maybe a -> Maybe a -> Maybe a
+mergeProposedWorkouts Nothing Nothing = Nothing
+mergeProposedWorkouts (Just p1) Nothing = Just p1
+mergeProposedWorkouts Nothing (Just p1) = Just p1
+mergeProposedWorkouts p1 p2 = p2
 
 mergeDatabases :: Database -> Database -> Database
-mergeDatabases d1 d2 = Database {proposedWorkout = proposedWorkout d2, exerciseLookup = mergeExercises (exerciseLookup d1) (exerciseLookup d2)}
+mergeDatabases d1 d2 = Database {proposedWorkout = mpw, exerciseLookup = elu}
+  where mpw = mergeProposedWorkouts (proposedWorkout d1) (proposedWorkout d2)
+        elu = mergeExercises (exerciseLookup d1) (exerciseLookup d2)
+
+instance Semigroup Database where
+  (<>) d1 d2 = Database {proposedWorkout = mpw, exerciseLookup = elu}
+    where mpw = mergeProposedWorkouts (proposedWorkout d1) (proposedWorkout d2)
+          elu = mergeExercises (exerciseLookup d1) (exerciseLookup d2)

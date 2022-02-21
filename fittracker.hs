@@ -44,7 +44,7 @@ data Workout = Workout {
 data Database = Database {
   exerciseLookup :: Map ExerciseType [Exercise]
   , proposedWorkout :: Maybe Workout
-}
+} deriving (Show, Eq, Ord)
 
 
 
@@ -127,39 +127,39 @@ getReps w = replicate 5 r
     r = Reps {weight = w, repCount = 5, outcome = Success}
 
 s1 :: Exercise
-s1 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay1, sets = getReps 50}
+s1 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay3, sets = getReps 55}
 s2 :: Exercise
 s2 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay2, sets = getReps 52.5}
 s3 :: Exercise
-s3 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay3, sets = getReps 55}
+s3 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay1, sets = getReps 50}
 
 d1 :: Exercise
-d1 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay1, sets = getReps 70}
+d1 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay3, sets = getReps 80}
 d2 :: Exercise
 d2 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay2, sets = getReps 75}
 d3 :: Exercise
-d3 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay3, sets = getReps 80}
+d3 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay1, sets = getReps 70}
 
 b1 :: Exercise
-b1 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay1, sets = getReps 50}
+b1 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay3, sets = getReps 55}
 b2 :: Exercise
 b2 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay2, sets = getReps 52.5}
 b3 :: Exercise
-b3 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay3, sets = getReps 55}
+b3 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay1, sets = getReps 50}
 
 o1 :: Exercise
-o1 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay1, sets = getReps 30}
+o1 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay3, sets = getReps 35}
 o2 :: Exercise
 o2 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay2, sets = getReps 32.5}
 o3 :: Exercise
-o3 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay3, sets = getReps 35}
+o3 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay1, sets = getReps 30}
 
 br1 :: Exercise
-br1 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay1, sets = getReps 40}
+br1 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, sets = getReps 45}
 br2 :: Exercise
 br2 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay2, sets = getReps 42.5}
 br3 :: Exercise
-br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay3, sets = getReps 45}
+br3 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay1, sets = getReps 40}
 
 s4 :: Exercise
 s4 = Exercise {exerciseType = Squat, exerciseTime = Just exerciseDay4, sets = getReps 57.5}
@@ -167,10 +167,6 @@ d4 :: Exercise
 d4 = Exercise {exerciseType = Deadlift, exerciseTime = Just exerciseDay4, sets = getReps 85}
 b4 :: Exercise
 b4 = Exercise {exerciseType = BenchPress, exerciseTime = Just exerciseDay4, sets = getReps 57.5}
-o4 :: Exercise
-o4 = Exercise {exerciseType = OverheadPress, exerciseTime = Just exerciseDay4, sets = getReps 37.5}
-br4 :: Exercise
-br4 = Exercise {exerciseType = BentOverRows, exerciseTime = Just exerciseDay4, sets = getReps 47.5}
 
 nextExercises = [s4, b4, d4]
 
@@ -203,7 +199,7 @@ saveExercise db e = Database {exerciseLookup = newElu, proposedWorkout = propose
   where elu = exerciseLookup db
         et = exerciseType e
         es = getExercises db et
-        f x  = Just (e:reverse es)
+        f x  = Just (e:es)
         newElu = Map.update f et elu
 
 saveProposedWorkout :: Database -> Workout -> Database
@@ -223,11 +219,17 @@ getExercises db et = listOrEmpty (Map.lookup et (exerciseLookup db))
 -- Generate the next workout in this sequence and save to repository
 
 saveExercises :: Database -> [Exercise] -> Database
-saveExercises db exs = foldl (\d1 d2 -> d2) db dbs 
+saveExercises db exs = foldl mergeDatabases db dbs
   where f = saveExercise db
         dbs = map f exs
 
 longestList :: [a] -> [a] -> [a]
-longestList l1 l2 = if length l1 > length l2 
+longestList l1 l2 = if length l1 > length l2
                       then l1
                       else l2
+
+mergeExercises :: Ord k => Map k [a] -> Map k [a] -> Map k [a]
+mergeExercises = Map.unionWith longestList
+
+mergeDatabases :: Database -> Database -> Database
+mergeDatabases d1 d2 = Database {proposedWorkout = proposedWorkout d2, exerciseLookup = mergeExercises (exerciseLookup d1) (exerciseLookup d2)}

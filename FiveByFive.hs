@@ -16,7 +16,9 @@ inc Deadlift w = w + 5
 inc _ w = w + 2.5
 
 dec :: ExerciseType -> Weight -> Weight
+dec Deadlift 5 = 5
 dec Deadlift w = w - 5
+dec _ 2.5 = 2.5
 dec _ w = w - 2.5
 
 takeLast :: Int -> [a] -> [a]

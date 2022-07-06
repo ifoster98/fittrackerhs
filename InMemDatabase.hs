@@ -90,6 +90,7 @@ overheadPresses = [o1, o2, o3]
 bentOverRows :: [Exercise]
 bentOverRows = [br1, br2, br3]
 
+database :: Database
 database = Database {exerciseLookup = dbExercises, proposedWorkout = Nothing}
 
 dbExercises :: ExerciseLookup

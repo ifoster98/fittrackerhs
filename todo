@@ -1,0 +1,9 @@
+Review existing code
+Review and set up project and build tool using standard haskell project tools
+Set up requirements list for functionality
+Set up testing at entry point
+Set up API web access layer
+Set up testing through API layer for basic HTTP 200/404/500 responses
+Determine data persistance technology and implement
+Build system to deploy real web service
+Set up implementation tests for web service
